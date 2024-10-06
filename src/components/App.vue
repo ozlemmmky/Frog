@@ -150,7 +150,7 @@ const priceFormat = (price) => (price / 100000).toLocaleString('en-US', { minimu
 
 </script>
 <template>
-    <div class="w-full flex flex-col md:flex-row md:w-2/3 xl:w-1/5 mx-auto mt-10 p-4">
+    <div class="flex flex-col  w-1/3 mx-auto mt-10 p-4">
        
         <div class="w-full">
             <img src="/logo.png" alt="">
