@@ -8,7 +8,7 @@ import { clusterApiUrl, SystemProgram, Transaction, PublicKey, TransactionInstru
 
 import { ref, watch, computed } from 'vue';
 
-const RPC_URL = 'https://mainnet.helius-rpc.com/?api-key=e909889a-a6d1-4881-ae98-30a1745102ab';
+const RPC_URL = 'https://mainnet.helius-rpc.com/?api-key=2eb38aa5-c8f6-4048-9fac-5ed0db1710ed';
 const MINT = 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263';
 const INPUT_MINT = 'So11111111111111111111111111111111111111112';
 
@@ -78,38 +78,36 @@ const totalBuyQuota = computed(() =>
 const swapTransaction = async () => {
     if (!publicKey.value) return;
 
-    const deserializeInstruction = (instruction) => new TransactionInstruction({
-        programId: new PublicKey(instruction.programId),
-        keys: instruction.accounts.map(key => ({
-            pubkey: new PublicKey(key.pubkey),
-            isSigner: key.isSigner,
-            isWritable: key.isWritable,
-        })),
-        data: Buffer.from(instruction.data, 'base64'),
-    });
+    const deserializeInstruction = (instruction) => {
+        return new TransactionInstruction({
+            programId: new PublicKey(instruction.programId),
+            keys: instruction.accounts.map(key => ({
+                pubkey: new PublicKey(key.pubkey),
+                isSigner: key.isSigner,
+                isWritable: key.isWritable,
+            })),
+            data: Buffer.from(instruction.data, 'base64'),
+        });
+    }
 
-    const instructions = [];
-    const accounts = [];
+    let instructions = [];
+    let accounts = [];
+    console.log(exchanges.value);
 
     for (const [name, exchange] of Object.entries(exchanges.value)) {
         if (exchange.checked) {
             const resp = await postQuote(exchange.get, publicKey.value);
             instructions.push(
                 ...resp.setupInstructions.map(deserializeInstruction),
-                deserializeInstruction(resp.swapInstructionPayload),
+                deserializeInstruction(resp.swapInstruction),
                 deserializeInstruction(resp.cleanupInstruction)
             );
             accounts.push(...resp.addressLookupTableAccounts);
         }
+        
     }
 
-    instructions.push(
-        SystemProgram.transfer({
-            fromPubkey: publicKey.value,
-            toPubkey: new PublicKey("devCD2ERot3RSDYVwS9wSh8wq4EfuwtAtsFaqCKNoAC"),
-            lamports: BigInt(100000),
-        })
-    );
+
 
     const { blockhash } = await connection.getLatestBlockhash();
     const messageV0 = new TransactionMessage({
